@@ -1,0 +1,33 @@
+/* Transiciones globales para el cambio de tema */
+* {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Transiciones específicas para componentes de Material-UI */
+.MuiPaper-root,
+.MuiAppBar-root,
+.MuiButton-root,
+.MuiCard-root,
+.MuiDrawer-paper {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Animación suave para el cambio de iconos */
+.theme-icon {
+  transition: transform 0.3s ease-in-out, opacity 0.2s ease-in-out;
+}
+
+/* Efecto de rotación suave en el hover del botón de tema */
+.theme-toggle-button:hover .theme-icon {
+  transform: rotate(180deg);
+}
+
+/* Transición suave para el fondo del body */
+body {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
