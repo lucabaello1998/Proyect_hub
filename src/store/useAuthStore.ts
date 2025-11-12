@@ -1,31 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, LoginCredentials, AuthState } from '../types/auth';
-
-// Usuarios mock para el sistema de login
-const mockUsers: Array<User & { password: string }> = [
-  {
-    id: 1,
-    username: 'admin',
-    password: 'admin123',
-    email: 'admin@proyecthub.com',
-    role: 'admin',
-    name: 'Administrador'
-  },
-  {
-    id: 2,
-    username: 'demo',
-    password: 'demo123',
-    email: 'demo@proyecthub.com',
-    role: 'user',
-    name: 'Usuario Demo'
-  }
-];
+import type { LoginCredentials, AuthState } from '../types/auth';
+import { authService } from '../services/authService';
 
 interface AuthStore extends AuthState {
   login: (credentials: LoginCredentials) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   clearError: () => void;
+  initialize: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -36,40 +18,65 @@ export const useAuthStore = create<AuthStore>()(
       isLoading: false,
       error: null,
 
+      initialize: async () => {
+        set({ isLoading: true });
+        try {
+          const user = await authService.getCurrentUser();
+          set({ 
+            user, 
+            isAuthenticated: !!user, 
+            isLoading: false 
+          });
+        } catch {
+          set({ 
+            user: null, 
+            isAuthenticated: false, 
+            isLoading: false 
+          });
+        }
+      },
+
       login: async (credentials: LoginCredentials) => {
         set({ isLoading: true, error: null });
 
-        // Simular latencia de red
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const user = mockUsers.find(
-          u => u.username === credentials.username && u.password === credentials.password
-        );
-
-        if (user) {
-          const { password: _, ...userWithoutPassword } = user;
+        try {
+          const user = await authService.login(credentials.username, credentials.password);
+          
+          if (user) {
+            set({ 
+              user, 
+              isAuthenticated: true, 
+              isLoading: false,
+              error: null 
+            });
+            return true;
+          } else {
+            set({ 
+              error: 'Usuario o contraseña incorrectos', 
+              isLoading: false 
+            });
+            return false;
+          }
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión';
           set({ 
-            user: userWithoutPassword, 
-            isAuthenticated: true, 
-            isLoading: false,
-            error: null 
-          });
-          return true;
-        } else {
-          set({ 
-            error: 'Usuario o contraseña incorrectos', 
+            error: errorMessage, 
             isLoading: false 
           });
           return false;
         }
       },
 
-      logout: () => {
-        set({ 
-          user: null, 
-          isAuthenticated: false, 
-          error: null 
-        });
+      logout: async () => {
+        try {
+          await authService.logout();
+        } finally {
+          set({ 
+            user: null, 
+            isAuthenticated: false, 
+            error: null 
+          });
+        }
       },
 
       clearError: () => {
@@ -85,3 +92,11 @@ export const useAuthStore = create<AuthStore>()(
     }
   )
 );
+
+// Escuchar cambios de autenticación
+authService.onAuthChange((user) => {
+  useAuthStore.setState({
+    user,
+    isAuthenticated: !!user
+  });
+});

@@ -34,13 +34,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <Box sx={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="sticky">
+      <AppBar position="sticky" color="default" enableColorOnDark>
         <Toolbar sx={{ gap: 2 }}>
           <Typography 
             variant="h6" 
             component={Link} 
             to="/" 
-            sx={{ color: 'inherit', textDecoration: 'none', flexGrow: 1 }}
+            sx={{ color: 'text.primary', textDecoration: 'none', flexGrow: 1 }}
           >
             Hub de Proyectos
           </Typography>
@@ -51,7 +51,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <Button
                 component={Link}
                 to="/admin"
-                color="inherit"
                 startIcon={<AdminPanelSettings />}
                 sx={{ textTransform: 'none' }}
               >
@@ -66,7 +65,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <>
                 <Button
                   onClick={handleUserMenuOpen}
-                  color="inherit"
                   startIcon={
                     <Avatar
                       sx={{
@@ -106,7 +104,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <Button
                 component={Link}
                 to="/login"
-                color="inherit"
                 variant="outlined"
                 sx={{ textTransform: 'none' }}
               >

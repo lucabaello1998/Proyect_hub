@@ -1,81 +1,99 @@
 import { create } from 'zustand';
 import type { Project } from '../types/project';
-import { gitService } from '../services/gitService';
+import { projectService } from '../services/projectService';
 
 type ProjectsState = {
   items: Project[];
   filterText: string;
+  isLoading: boolean;
+  error: string | null;
+  
+  // Actions
+  fetchProjects: () => Promise<void>;
   setFilterText: (t: string) => void;
-  add: (p: Omit<Project, 'id'>) => void;
-  update: (id: number, partial: Partial<Project>) => void;
-  remove: (id: number) => void;
+  add: (p: Omit<Project, 'id' | 'createdAt'>, images: File[]) => Promise<void>;
+  update: (id: string, partial: Partial<Omit<Project, 'id'>>, newImages?: File[]) => Promise<void>;
+  remove: (id: string) => Promise<void>;
 };
 
-// Función auxiliar para generar datos de repositorio
-const generateProjectWithRepo = (baseProject: Omit<Project, 'repository'>): Project => ({
-  ...baseProject,
-  repository: gitService.getRepository(baseProject.id)
-});
-
-const baseProjects = [
-  { 
-    id: 1, 
-    title: 'Running App', 
-    description: 'Plataforma de running donde los usuarios pueden puntuar recorridos por área geográfica y competir entre ellos. Incluye mapas interactivos, rankings, desafíos semanales y estadísticas de rendimiento.', 
-    category: 'Deportes', 
-    stack: ['React Native', 'Node.js', 'MongoDB', 'Maps API'],
-    repoUrl: 'https://github.com/ejemplo/running-app',
-    demoUrl: 'https://running-app-demo.com',
-    imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-    createdAt: '2024-01-15'
-  },
-  { 
-    id: 2, 
-    title: 'Court Finder', 
-    description: 'Buscador inteligente de canchas deportivas para fútbol, natación, tenis, paddle y más deportes. Permite filtrar por ubicación, precio, horarios disponibles y reservar online con sistema de pagos integrado.', 
-    category: 'Deportes', 
-    stack: ['React', 'TypeScript', 'Google Maps', 'Stripe'],
-    repoUrl: 'https://github.com/ejemplo/court-finder',
-    demoUrl: 'https://court-finder-demo.com',
-    imageUrl: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-    createdAt: '2024-02-20'
-  },
-  { 
-    id: 3, 
-    title: 'ERP Interno', 
-    description: 'Sistema empresarial robusto de gestión de recursos que incluye control de inventario, facturación automática, reportes financieros y dashboard ejecutivo en tiempo real.', 
-    category: 'ERP', 
-    stack: ['React', 'C#', 'SQL Server'],
-    repoUrl: 'https://github.com/ejemplo/erp-interno',
-    imageUrl: 'https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-    createdAt: '2024-02-28'
-  },
-  { 
-    id: 4, 
-    title: 'Fichaje QR', 
-    description: 'Aplicación web progresiva innovadora para control de asistencia laboral mediante códigos QR. Funciona offline y sincroniza automáticamente cuando hay conexión.', 
-    category: 'RRHH', 
-    stack: ['React', 'PWA', 'Service Workers'],
-    demoUrl: 'https://fichaje-qr.netlify.app',
-    imageUrl: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-    createdAt: '2024-03-10'
-  },
-];
-
-const initial: Project[] = baseProjects.map(generateProjectWithRepo);
-
 export const useProjects = create<ProjectsState>((set, get) => ({
-  items: initial,
+  items: [],
   filterText: '',
+  isLoading: false,
+  error: null,
+
+  fetchProjects: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const projects = await projectService.getAll();
+      set({ items: projects, isLoading: false });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al cargar proyectos';
+      set({ error: errorMessage, isLoading: false });
+    }
+  },
+
   setFilterText: (t) => set({ filterText: t }),
-  add: (p) => {
-    const nextId = Math.max(...get().items.map(i => i.id)) + 1;
-    set({ items: [...get().items, { id: nextId, createdAt: new Date().toISOString().split('T')[0], ...p }] });
+
+  add: async (projectData, images) => {
+    set({ isLoading: true, error: null });
+    try {
+      // Subir imágenes y obtener URLs
+      const imageUrls = await projectService.uploadImages(images);
+      
+      // Crear proyecto con las URLs de las imágenes
+      const newProject: Omit<Project, 'id' | 'createdAt'> = {
+        ...projectData,
+        images: imageUrls,
+        imageUrl: imageUrls[0] || '' // Primera imagen como portada
+      };
+
+      const createdProject = await projectService.create(newProject);
+      set({ items: [...get().items, createdProject], isLoading: false });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al crear proyecto';
+      set({ error: errorMessage, isLoading: false });
+      throw error;
+    }
   },
-  update: (id, partial) => {
-    set({ items: get().items.map(i => (i.id === id ? { ...i, ...partial } : i)) });
+
+  update: async (id, partial, newImages) => {
+    set({ isLoading: true, error: null });
+    try {
+      let updateData = { ...partial };
+
+      // Si hay nuevas imágenes, subirlas
+      if (newImages && newImages.length > 0) {
+        const imageUrls = await projectService.uploadImages(newImages);
+        updateData.images = imageUrls;
+        updateData.imageUrl = imageUrls[0]; // Primera imagen como portada
+      }
+
+      const updatedProject = await projectService.update(id, updateData);
+      
+      set({ 
+        items: get().items.map(i => (i.id === id ? updatedProject : i)),
+        isLoading: false 
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al actualizar proyecto';
+      set({ error: errorMessage, isLoading: false });
+      throw error;
+    }
   },
-  remove: (id) => {
-    set({ items: get().items.filter(i => i.id !== id) });
+
+  remove: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      await projectService.delete(id);
+      set({ 
+        items: get().items.filter(i => i.id !== id),
+        isLoading: false 
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al eliminar proyecto';
+      set({ error: errorMessage, isLoading: false });
+      throw error;
+    }
   },
 }));

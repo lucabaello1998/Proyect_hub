@@ -31,14 +31,17 @@ export type GitRepository = {
 };
 
 export type Project = {
-  id: number;
+  id: string; // Cambiado a string para compatibilidad con Supabase UUID
   title: string;
   description: string;
   repoUrl?: string;
   demoUrl?: string;
   imageUrl?: string;
+  images?: string[]; // Galería de imágenes
   category?: string;
   createdAt?: string;
   stack?: string[];
+  author?: string; // Autor del proyecto
+  tags?: string[]; // Tags adicionales
   repository?: GitRepository;
 };

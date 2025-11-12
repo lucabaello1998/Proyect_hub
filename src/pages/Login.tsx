@@ -62,18 +62,16 @@ export default function Login() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        bgcolor: 'background.default',
         p: 2
       }}
     >
       <Container maxWidth="sm">
         <Paper
-          elevation={24}
+          elevation={3}
           sx={{
             p: 4,
-            borderRadius: 3,
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)'
+            borderRadius: 3
           }}
         >
           {/* Header */}
@@ -88,7 +86,7 @@ export default function Login() {
           </Box>
 
           {/* Usuarios de prueba */}
-          <Card sx={{ mb: 3, bgcolor: 'grey.50' }}>
+          <Card sx={{ mb: 3, bgcolor: 'action.hover' }}>
             <CardContent>
               <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
                 👥 Usuarios de prueba:
@@ -129,6 +127,7 @@ export default function Login() {
               required
               autoFocus
               disabled={isLoading}
+              color="primary"
             />
 
             <TextField
@@ -140,6 +139,7 @@ export default function Login() {
               margin="normal"
               required
               disabled={isLoading}
+              color="primary"
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -147,6 +147,7 @@ export default function Login() {
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
                       disabled={isLoading}
+                      color="default"
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>

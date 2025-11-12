@@ -1,5 +1,5 @@
 export type User = {
-  id: number;
+  id: string | number; // String para Supabase, number para compatibilidad
   username: string;
   email: string;
   role: 'admin' | 'user';
