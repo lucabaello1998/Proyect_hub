@@ -1,0 +1,20 @@
+# .NET build and user files
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet packages
+*.nupkg
+# Dotnet cache
+*.cache
+# Logs
+*.log
+# VS Code
+.vscode/
+# Rider
+.idea/
+# Others
+*.DS_Store
