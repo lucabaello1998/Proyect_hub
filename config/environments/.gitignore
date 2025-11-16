@@ -1,0 +1,3 @@
+# Ignorar perfiles de environment reales
+*.ps1
+!*.ps1.example
