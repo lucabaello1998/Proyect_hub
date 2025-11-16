@@ -5,7 +5,9 @@ obj/
 *.suo
 *.userosscache
 *.sln.docstates
-
+# Archivos de configuración sensibles
+appsettings.*.json
+!appsettings.Development.json
 # NuGet packages
 *.nupkg
 # Dotnet cache
