@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using ProyectHub.Data;
 using ProyectHub.Models;
@@ -34,6 +35,7 @@ namespace ProyectHub.Api.Controllers
         }
 
         // POST: api/projects
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<Project>> CreateProject(Project project)
         {
@@ -43,6 +45,7 @@ namespace ProyectHub.Api.Controllers
         }
 
         // PUT: api/projects/{id}
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProject(int id, Project project)
         {
@@ -63,6 +66,7 @@ namespace ProyectHub.Api.Controllers
         }
 
         // DELETE: api/projects/{id}
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProject(int id)
         {
