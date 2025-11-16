@@ -1,0 +1,22 @@
+# .NET build and user files
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+# Archivos de configuración sensibles
+appsettings.*.json
+!appsettings.Development.json
+# NuGet packages
+*.nupkg
+# Dotnet cache
+*.cache
+# Logs
+*.log
+# VS Code
+.vscode/
+# Rider
+.idea/
+# Others
+*.DS_Store
