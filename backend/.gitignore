@@ -6,6 +6,7 @@ obj/
 *.userosscache
 *.sln.docstates
 # Archivos de configuración sensibles
+appsettings.json
 appsettings.*.json
 !appsettings.Development.json
 # NuGet packages
