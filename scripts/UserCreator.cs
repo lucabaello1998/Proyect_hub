@@ -19,6 +19,17 @@ namespace ProyectHubCli
             string username = args[0];
             string password = args[1];
 
+            if (string.IsNullOrWhiteSpace(username) || !username.Contains("@"))
+            {
+                Console.WriteLine("Error: El username debe tener formato email.");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                Console.WriteLine("Error: La contraseña es requerida.");
+                return;
+            }
+
             string env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
             string configPath = env == "Production"
                 ? Path.Combine("..", "config", "secrets", "production", "ProyectHub.Api.appsettings.json")
@@ -35,9 +46,24 @@ namespace ProyectHubCli
             var root = doc.RootElement;
             string connectionString = root.GetProperty("ConnectionStrings").GetProperty("DefaultConnection").GetString() ?? string.Empty;
 
+            using var connection = new SqlConnection(connectionString);
+            connection.Open();
+
+            // Validar si el usuario ya existe
+            using (var checkCmd = connection.CreateCommand())
+            {
+                checkCmd.CommandText = "SELECT COUNT(*) FROM Users WHERE Username = @Username";
+                checkCmd.Parameters.AddWithValue("@Username", username);
+                int exists = (int)checkCmd.ExecuteScalar();
+                if (exists > 0)
+                {
+                    Console.WriteLine("Error: El usuario ya existe.");
+                    return;
+                }
+            }
+
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
 
-            using var connection = new SqlConnection(connectionString);
             using var command = connection.CreateCommand();
             command.CommandText = "INSERT INTO Users (Username, PasswordHash) VALUES (@Username, @PasswordHash)";
             command.Parameters.AddWithValue("@Username", username);
@@ -45,7 +71,6 @@ namespace ProyectHubCli
 
             try
             {
-                connection.Open();
                 int rows = command.ExecuteNonQuery();
                 if (rows > 0)
                 {
