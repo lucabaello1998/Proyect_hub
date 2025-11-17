@@ -4,7 +4,21 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+var configFolder = env.ToLower() == "development" ? "local" : env.ToLower();
+var dir = new DirectoryInfo(AppContext.BaseDirectory);
+while (dir != null && !File.Exists(Path.Combine(dir.FullName, "ProyectHub.sln")))
+{
+    dir = dir.Parent;
+}
+var repoRoot = dir?.FullName ?? throw new Exception("No se encontró la raíz del monorepo");
+var configPath = Path.Combine(repoRoot, "config", "secrets", configFolder, "ProyectHub.Api.appsettings.json");
+
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration
+    .SetBasePath(AppContext.BaseDirectory)
+    .AddJsonFile(configPath, optional: false, reloadOnChange: true)
+    .AddEnvironmentVariables();
 
 // Add services to the container
 builder.Services.AddDbContext<ProyectHubDbContext>(options =>
