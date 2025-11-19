@@ -18,7 +18,13 @@ export default function AuditLogPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch("/api/audit")
+        const token = localStorage.getItem('jwt');
+        fetch("/api/audit", {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        })
             .then((res) => res.json())
             .then((data) => {
                 setLogs(data);
