@@ -28,8 +28,16 @@ export default function App() {
         <Route 
           path="/admin" 
           element={
-            <ProtectedRoute requiredRole="admin">
+            <ProtectedRoute>
               <Admin />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/audit" 
+          element={
+            <ProtectedRoute>
+              {React.createElement(require('./pages/AuditLog').default)}
             </ProtectedRoute>
           } 
         />

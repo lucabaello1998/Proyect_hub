@@ -36,10 +36,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <Box sx={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       <AppBar position="sticky" color="default" enableColorOnDark>
         <Toolbar sx={{ gap: 2 }}>
-          <Typography 
-            variant="h6" 
-            component={Link} 
-            to="/" 
+          <Typography
+            variant="h6"
+            component={Link}
+            to="/"
             sx={{ color: 'text.primary', textDecoration: 'none', flexGrow: 1 }}
           >
             Hub de Proyectos
@@ -47,15 +47,24 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
           {/* Navegación */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {isAuthenticated && user?.role === 'admin' && (
-              <Button
-                component={Link}
-                to="/admin"
-                startIcon={<AdminPanelSettings />}
-                sx={{ textTransform: 'none' }}
-              >
-                Admin
-              </Button>
+            {isAuthenticated && (
+              <>
+                <Button
+                  component={Link}
+                  to="/admin"
+                  startIcon={<AdminPanelSettings />}
+                  sx={{ textTransform: 'none' }}
+                >
+                  Admin
+                </Button>
+                <Button
+                  component={Link}
+                  to="/audit"
+                  sx={{ textTransform: 'none' }}
+                >
+                  Auditoría
+                </Button>
+              </>
             )}
 
             <ColorModeToggle />
