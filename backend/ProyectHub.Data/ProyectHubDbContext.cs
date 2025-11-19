@@ -12,5 +12,6 @@ namespace ProyectHub.Data
 
         public DbSet<Project> Projects { get; set; } = null!;
         public DbSet<User> Users { get; set; } = null!;
+        public DbSet<AuditLog> AuditLogs { get; set; } = null!;
     }
 }
