@@ -41,6 +41,18 @@ namespace ProyectHub.Api.Controllers
         {
             _context.Projects.Add(project);
             await _context.SaveChangesAsync();
+            // Log de auditoría
+            var userId = int.TryParse(User.FindFirst("userId")?.Value, out var uid) ? uid : 0;
+            _context.AuditLogs.Add(new AuditLog
+            {
+                UserId = userId,
+                Action = "CREATE_PROJECT",
+                Entity = "Project",
+                EntityId = project.Id,
+                Timestamp = DateTime.UtcNow,
+                Details = $"Proyecto creado: {project.Name}"
+            });
+            await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetProject), new { id = project.Id }, project);
         }
 
@@ -54,6 +66,18 @@ namespace ProyectHub.Api.Controllers
             _context.Entry(project).State = EntityState.Modified;
             try
             {
+                await _context.SaveChangesAsync();
+                // Log de auditoría
+                var userId = int.TryParse(User.FindFirst("userId")?.Value, out var uid) ? uid : 0;
+                _context.AuditLogs.Add(new AuditLog
+                {
+                    UserId = userId,
+                    Action = "UPDATE_PROJECT",
+                    Entity = "Project",
+                    EntityId = project.Id,
+                    Timestamp = DateTime.UtcNow,
+                    Details = $"Proyecto editado: {project.Name}"
+                });
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
@@ -74,6 +98,18 @@ namespace ProyectHub.Api.Controllers
             if (project == null)
                 return NotFound();
             _context.Projects.Remove(project);
+            await _context.SaveChangesAsync();
+            // Log de auditoría
+            var userId = int.TryParse(User.FindFirst("userId")?.Value, out var uid) ? uid : 0;
+            _context.AuditLogs.Add(new AuditLog
+            {
+                UserId = userId,
+                Action = "DELETE_PROJECT",
+                Entity = "Project",
+                EntityId = id,
+                Timestamp = DateTime.UtcNow,
+                Details = $"Proyecto eliminado: {project?.Name ?? ""}"
+            });
             await _context.SaveChangesAsync();
             return NoContent();
         }
