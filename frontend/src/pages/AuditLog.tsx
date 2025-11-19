@@ -35,41 +35,47 @@ export default function AuditLogPage() {
         );
     };
 
-    if (loading) return <div>Cargando auditoría...</div>;
+    if (loading) return <div>Cargando registro...</div>;
 
     return (
         <div>
             <h2>Registro de Auditoría</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Usuario</th>
-                        <th>Acción</th>
-                        <th>Entidad</th>
-                        <th>Fecha</th>
-                        <th>Detalles</th>
-                        <th>Revocada</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {logs.map((log) => (
-                        <tr key={log.id}>
-                            <td>{log.userId}</td>
-                            <td>{log.action}</td>
-                            <td>{log.entity} {log.entityId ?? ""}</td>
-                            <td>{new Date(log.timestamp).toLocaleString()}</td>
-                            <td>{log.details}</td>
-                            <td>{log.revoked ? `Sí (${log.revokedAt ? new Date(log.revokedAt).toLocaleString() : ""})` : "No"}</td>
-                            <td>
-                                {!log.revoked && (
-                                    <button onClick={() => handleRevoke(log.id)}>Revocar</button>
-                                )}
-                            </td>
+            {logs.length === 0 ? (
+                <div style={{ marginTop: 32, textAlign: 'center', color: '#888' }}>
+                    No hay registros de auditoría para mostrar.
+                </div>
+            ) : (
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Acción</th>
+                            <th>Entidad</th>
+                            <th>Fecha</th>
+                            <th>Detalles</th>
+                            <th>Revocada</th>
+                            <th>Acciones</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {logs.map((log) => (
+                            <tr key={log.id}>
+                                <td>{log.userId}</td>
+                                <td>{log.action}</td>
+                                <td>{log.entity} {log.entityId ?? ""}</td>
+                                <td>{new Date(log.timestamp).toLocaleString()}</td>
+                                <td>{log.details}</td>
+                                <td>{log.revoked ? `Sí (${log.revokedAt ? new Date(log.revokedAt).toLocaleString() : ""})` : "No"}</td>
+                                <td>
+                                    {!log.revoked && (
+                                        <button onClick={() => handleRevoke(log.id)}>Revocar</button>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
         </div>
     );
 }
