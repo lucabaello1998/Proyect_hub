@@ -6,6 +6,7 @@ import ProjectDetail from './pages/ProjectDetail';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import AuditLog from './pages/AuditLog';
 import { useAuthStore } from './store/useAuthStore';
 import { useProjects } from './store/useProjects';
 
@@ -37,7 +38,7 @@ export default function App() {
           path="/audit" 
           element={
             <ProtectedRoute>
-              {React.createElement(require('./pages/AuditLog').default)}
+              <AuditLog />
             </ProtectedRoute>
           } 
         />
