@@ -4,14 +4,20 @@ import SaveIcon from '@mui/icons-material/Save';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useProjects } from '../store/useProjects';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Admin() {
-  const { items, add, update, remove } = useProjects();
-  const [form, setForm] = useState({ 
-    title: '', 
-    description: '', 
-    category: '', 
-    repoUrl: '', 
+  const navigate = useNavigate();
+  const items = useProjects(state => state.items);
+  const add = useProjects(state => state.add);
+  const update = useProjects(state => state.update);
+  const remove = useProjects(state => state.remove);
+  const fetchProjects = useProjects(state => state.fetchProjects);
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    category: '',
+    repoUrl: '',
     demoUrl: '',
     author: '',
     stack: '',
@@ -23,7 +29,7 @@ export default function Admin() {
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setSelectedImages(files);
-    
+
     // Crear previews
     const previews = files.map(file => URL.createObjectURL(file));
     setImagePreviews(previews);
@@ -32,49 +38,49 @@ export default function Admin() {
   const removeImage = (index: number) => {
     const newImages = selectedImages.filter((_, i) => i !== index);
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    
+
     // Liberar URL object
     URL.revokeObjectURL(imagePreviews[index]);
-    
+
     setSelectedImages(newImages);
     setImagePreviews(newPreviews);
   };
 
   const onSave = () => {
     if (!form.title.trim()) return;
-    
-    const stackArray = form.stack 
+
+    const stackArray = form.stack
       ? form.stack.split(',').map(s => s.trim()).filter(Boolean)
       : [];
-    
-    const tagsArray = form.tags 
+
+    const tagsArray = form.tags
       ? form.tags.split(',').map(s => s.trim()).filter(Boolean)
       : [];
-    
+
     // Subir las imágenes reales (Files) a Supabase
-    add({ 
-      title: form.title.trim(), 
-      description: form.description.trim(), 
+    add({
+      title: form.title.trim(),
+      description: form.description.trim(),
       category: form.category.trim() || undefined,
       repoUrl: form.repoUrl.trim() || undefined,
       demoUrl: form.demoUrl.trim() || undefined,
       author: form.author.trim() || undefined,
       stack: stackArray.length > 0 ? stackArray : undefined,
       tags: tagsArray.length > 0 ? tagsArray : undefined
-    }, selectedImages); // Pasar las imágenes como segundo parámetro
-    
+    }, selectedImages).then(() => fetchProjects()); // Refresca proyectos tras agregar
+
     // Limpiar formulario
-    setForm({ 
-      title: '', 
-      description: '', 
-      category: '', 
-      repoUrl: '', 
-      demoUrl: '', 
+    setForm({
+      title: '',
+      description: '',
+      category: '',
+      repoUrl: '',
+      demoUrl: '',
       author: '',
       stack: '',
       tags: ''
     });
-    
+
     // Limpiar imágenes
     imagePreviews.forEach(url => URL.revokeObjectURL(url));
     setSelectedImages([]);
@@ -87,24 +93,27 @@ export default function Admin() {
         Administración de Proyectos
       </Typography>
 
+      <Button variant="outlined" sx={{ mt: 2 }} onClick={() => navigate('/audit')}>
+        Ver registro de auditoría
+      </Button>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h5" sx={{ mb: 2 }}>Crear Proyecto</Typography>
         <Stack spacing={2}>
-          <TextField 
-            label="Título *" 
-            value={form.title} 
-            onChange={e => setForm(v => ({...v, title: e.target.value}))} 
+          <TextField
+            label="Título *"
+            value={form.title}
+            onChange={e => setForm(v => ({ ...v, title: e.target.value }))}
             fullWidth
           />
-          <TextField 
-            label="Descripción" 
-            value={form.description} 
-            onChange={e => setForm(v => ({...v, description: e.target.value}))} 
-            multiline 
+          <TextField
+            label="Descripción"
+            value={form.description}
+            onChange={e => setForm(v => ({ ...v, description: e.target.value }))}
+            multiline
             minRows={3}
             fullWidth
           />
-          
+
           {/* Upload de imágenes */}
           <Box>
             <Button
@@ -122,7 +131,7 @@ export default function Admin() {
                 onChange={handleImageSelect}
               />
             </Button>
-            
+
             <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: 2 }}>
               La primera imagen será la portada. Las demás formarán la galería automáticamente.
             </Typography>
@@ -177,53 +186,53 @@ export default function Admin() {
             )}
           </Box>
 
-          <TextField 
-            label="Autor" 
-            value={form.author} 
-            onChange={e => setForm(v => ({...v, author: e.target.value}))}
+          <TextField
+            label="Autor"
+            value={form.author}
+            onChange={e => setForm(v => ({ ...v, author: e.target.value }))}
             placeholder="Nombre del autor del proyecto"
             fullWidth
           />
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <TextField 
-              label="Categoría" 
-              value={form.category} 
-              onChange={e => setForm(v => ({...v, category: e.target.value}))}
+            <TextField
+              label="Categoría"
+              value={form.category}
+              onChange={e => setForm(v => ({ ...v, category: e.target.value }))}
               sx={{ flex: 1, minWidth: '200px' }}
             />
-            <TextField 
-              label="Stack (separado por comas)" 
-              value={form.stack} 
-              onChange={e => setForm(v => ({...v, stack: e.target.value}))}
+            <TextField
+              label="Stack (separado por comas)"
+              value={form.stack}
+              onChange={e => setForm(v => ({ ...v, stack: e.target.value }))}
               placeholder="React, TypeScript, Node.js"
               sx={{ flex: 1, minWidth: '200px' }}
             />
           </Box>
-          <TextField 
-            label="Tags (separados por comas)" 
-            value={form.tags} 
-            onChange={e => setForm(v => ({...v, tags: e.target.value}))}
+          <TextField
+            label="Tags (separados por comas)"
+            value={form.tags}
+            onChange={e => setForm(v => ({ ...v, tags: e.target.value }))}
             placeholder="Web, Mobile, API, Firebase"
             fullWidth
           />
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <TextField 
-              label="URL del repositorio" 
-              value={form.repoUrl} 
-              onChange={e => setForm(v => ({...v, repoUrl: e.target.value}))}
+            <TextField
+              label="URL del repositorio"
+              value={form.repoUrl}
+              onChange={e => setForm(v => ({ ...v, repoUrl: e.target.value }))}
               type="url"
               sx={{ flex: 1, minWidth: '200px' }}
             />
-            <TextField 
-              label="URL de la demo" 
-              value={form.demoUrl} 
-              onChange={e => setForm(v => ({...v, demoUrl: e.target.value}))}
+            <TextField
+              label="URL de la demo"
+              value={form.demoUrl}
+              onChange={e => setForm(v => ({ ...v, demoUrl: e.target.value }))}
               type="url"
               sx={{ flex: 1, minWidth: '200px' }}
             />
           </Box>
-          <Button 
-            startIcon={<SaveIcon />} 
+          <Button
+            startIcon={<SaveIcon />}
             onClick={onSave}
             disabled={!form.title.trim()}
             sx={{ alignSelf: 'flex-start' }}
@@ -250,14 +259,14 @@ export default function Admin() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {items.map(p => (
+              {items.map(p => ((
                 <TableRow key={p.id}>
                   <TableCell>{p.id}</TableCell>
                   <TableCell>
                     <TextField
                       variant="standard"
                       defaultValue={p.title}
-                      onBlur={(e) => update(p.id, { title: e.target.value })}
+                      onBlur={async (e) => { await update(p.id, { title: e.target.value }); await fetchProjects(); }}
                       fullWidth
                     />
                   </TableCell>
@@ -265,23 +274,28 @@ export default function Admin() {
                     <TextField
                       variant="standard"
                       defaultValue={p.category || ''}
-                      onBlur={(e) => update(p.id, { category: e.target.value || undefined })}
+                      onBlur={async (e) => { await update(p.id, { category: e.target.value || undefined }); await fetchProjects(); }}
                       fullWidth
                     />
                   </TableCell>
                   <TableCell>
                     <TextField
                       variant="standard"
-                      defaultValue={p.images?.join(', ') || ''}
-                      onBlur={(e) => {
-                        const imagesArray = e.target.value 
+                      defaultValue={Array.isArray(p.images)
+                        ? p.images.join(', ')
+                        : (typeof p.images === 'string' && (p.images as string).startsWith('[')
+                          ? (() => { try { return JSON.parse(p.images as string).join(', '); } catch { return ''; } })()
+                          : '')}
+                      onBlur={async (e) => {
+                        const imagesArray = e.target.value
                           ? e.target.value.split(',').map(s => s.trim()).filter(Boolean)
                           : [];
                         const imageUrl = imagesArray.length > 0 ? imagesArray[0] : undefined;
-                        update(p.id, { 
+                        await update(p.id, {
                           images: imagesArray.length > 0 ? imagesArray : undefined,
                           imageUrl: imageUrl
                         });
+                        await fetchProjects();
                       }}
                       placeholder="URLs separadas por comas"
                       fullWidth
@@ -290,26 +304,31 @@ export default function Admin() {
                   <TableCell>
                     <TextField
                       variant="standard"
-                      defaultValue={p.stack?.join(', ') || ''}
-                      onBlur={(e) => {
-                        const stackArray = e.target.value 
+                      defaultValue={Array.isArray(p.stack)
+                        ? p.stack.join(', ')
+                        : (typeof p.stack === 'string' && (p.stack as string).startsWith('[')
+                          ? (() => { try { return JSON.parse(p.stack as string).join(', '); } catch { return ''; } })()
+                          : '')}
+                      onBlur={async (e) => {
+                        const stackArray = e.target.value
                           ? e.target.value.split(',').map(s => s.trim()).filter(Boolean)
                           : [];
-                        update(p.id, { stack: stackArray.length > 0 ? stackArray : undefined });
+                        await update(p.id, { stack: stackArray.length > 0 ? stackArray : undefined });
+                        await fetchProjects();
                       }}
                       fullWidth
                     />
                   </TableCell>
                   <TableCell>
-                    <IconButton 
-                      color="error" 
-                      onClick={() => remove(p.id)} 
+                    <IconButton
+                      color="error"
+                      onClick={async () => { await remove(p.id); await fetchProjects(); }}
                       aria-label={`eliminar proyecto ${p.title}`}
                     >
                       <DeleteIcon />
                     </IconButton>
                   </TableCell>
-                </TableRow>
+                </TableRow>)
               ))}
             </TableBody>
           </Table>
@@ -320,6 +339,6 @@ export default function Admin() {
           </Typography>
         )}
       </Paper>
-    </Stack>
+    </Stack >
   );
 }

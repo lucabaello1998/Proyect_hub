@@ -4,9 +4,11 @@ import { useProjects } from '../store/useProjects';
 
 export default function Home() {
   const nav = useNavigate();
-  const { items, filterText, setFilterText } = useProjects();
-  const filtered = items.filter(p => 
-    p.title.toLowerCase().includes(filterText.toLowerCase()) || 
+  const items = useProjects(state => state.items);
+  const filterText = useProjects(state => state.filterText);
+  const setFilterText = useProjects(state => state.setFilterText);
+  const filtered = items.filter(p =>
+    p.title.toLowerCase().includes(filterText.toLowerCase()) ||
     (p.category ?? '').toLowerCase().includes(filterText.toLowerCase())
   );
 
@@ -36,10 +38,10 @@ export default function Home() {
                   <Typography variant="h6" gutterBottom>
                     {p.title}
                   </Typography>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      opacity: 0.8, 
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      opacity: 0.8,
                       mb: 2,
                       flex: 1,
                       display: '-webkit-box',
@@ -54,12 +56,26 @@ export default function Home() {
                   <Box>
                     <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
                       {p.category && <Chip size="small" label={p.category} />}
-                      {(p.stack ?? []).slice(0, 3).map(s => (
-                        <Chip key={s} size="small" label={s} />
-                      ))}
-                      {(p.stack ?? []).length > 3 && (
-                        <Chip size="small" label={`+${(p.stack?.length ?? 0) - 3}`} variant="outlined" />
-                      )}
+                      {(() => {
+                        const stackArr: string[] = Array.isArray(p.stack)
+                          ? p.stack as string[]
+                          : (typeof p.stack === 'string' && (p.stack as string).startsWith('[')
+                            ? (() => { try { return JSON.parse(p.stack as string); } catch { return []; } })()
+                            : []);
+                        return stackArr.slice(0, 3).map((s: string) => (
+                          <Chip key={s} size="small" label={s} />
+                        ));
+                      })()}
+                      {(() => {
+                        const stackArr: string[] = Array.isArray(p.stack)
+                          ? p.stack as string[]
+                          : (typeof p.stack === 'string' && (p.stack as string).startsWith('[')
+                            ? (() => { try { return JSON.parse(p.stack as string); } catch { return []; } })()
+                            : []);
+                        return stackArr.length > 3 && (
+                          <Chip size="small" label={`+${stackArr.length - 3}`} variant="outlined" />
+                        );
+                      })()}
                     </Stack>
                   </Box>
                 </CardContent>
