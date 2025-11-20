@@ -43,8 +43,8 @@ namespace ProyectHub.Api.Controllers
             await _context.SaveChangesAsync();
             if (project.Id > 0)
             {
-                var userId = int.TryParse(User.FindFirst("userId")?.Value, out var uid) ? uid : 0;
-                var userEmail = User.FindFirst("email")?.Value ?? "";
+                var userId = int.TryParse(User.FindFirst("userId")?.Value ?? User.FindFirst("Id")?.Value, out var uid) ? uid : 0;
+                var userName = User.FindFirst("username")?.Value ?? "";
                 var snapshot = System.Text.Json.JsonSerializer.Serialize(project);
                 _context.AuditLogs.Add(new AuditLog
                 {
@@ -54,7 +54,7 @@ namespace ProyectHub.Api.Controllers
                     EntityId = project.Id,
                     Timestamp = DateTime.UtcNow,
                     Data = snapshot,
-                    PerformedByEmail = userEmail
+                    PerformedByEmail = userName
                 });
                 await _context.SaveChangesAsync();
             }
@@ -89,8 +89,8 @@ namespace ProyectHub.Api.Controllers
             {
                 await _context.SaveChangesAsync();
                 // Log de auditoría con cambios previos y actuales
-                var userId = int.TryParse(User.FindFirst("userId")?.Value, out var uid) ? uid : 0;
-                var userEmail = User.FindFirst("email")?.Value ?? "";
+                var userId = int.TryParse(User.FindFirst("userId")?.Value ?? User.FindFirst("Id")?.Value, out var uid) ? uid : 0;
+                var userName = User.FindFirst("username")?.Value ?? "";
                 var current = System.Text.Json.JsonSerializer.Serialize(existing);
                 var auditData = System.Text.Json.JsonSerializer.Serialize(new { previous, current });
                 _context.AuditLogs.Add(new AuditLog
@@ -101,7 +101,7 @@ namespace ProyectHub.Api.Controllers
                     EntityId = existing.Id,
                     Timestamp = DateTime.UtcNow,
                     Data = auditData,
-                    PerformedByEmail = userEmail
+                    PerformedByEmail = userName
                 });
                 await _context.SaveChangesAsync();
             }
@@ -155,8 +155,8 @@ namespace ProyectHub.Api.Controllers
             _context.Projects.Remove(project);
             await _context.SaveChangesAsync();
             // Log de auditoría avanzado
-            var userId = int.TryParse(User.FindFirst("userId")?.Value, out var uid) ? uid : 0;
-            var userEmail = User.FindFirst("email")?.Value ?? "";
+            var userId = int.TryParse(User.FindFirst("userId")?.Value ?? User.FindFirst("Id")?.Value, out var uid) ? uid : 0;
+            var userName = User.FindFirst("username")?.Value ?? "";
             _context.AuditLogs.Add(new AuditLog
             {
                 UserId = userId,
@@ -165,7 +165,7 @@ namespace ProyectHub.Api.Controllers
                 EntityId = id,
                 Timestamp = DateTime.UtcNow,
                 Data = projectJson,
-                PerformedByEmail = userEmail
+                PerformedByEmail = userName
             });
             await _context.SaveChangesAsync();
             return NoContent();
