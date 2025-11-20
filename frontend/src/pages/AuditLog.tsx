@@ -1,87 +1,60 @@
 import { useEffect, useState } from "react";
-
-interface AuditLog {
-    id: number;
-    userId: number;
-    action: string;
-    entity: string;
-    entityId?: number;
-    timestamp: string;
-    details?: string;
-    revoked: boolean;
-    revokedBy?: number;
-    revokedAt?: string;
-}
+import { Table, TableHead, TableRow, TableCell, TableBody, Paper, Typography, Box, Button } from '@mui/material';
+import { auditService } from '../services/auditService';
+import type { AuditLog } from '../types/audit';
+import { useNavigate } from 'react-router-dom';
 
 export default function AuditLogPage() {
-    const [logs, setLogs] = useState<AuditLog[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+    const [loadingAudit, setLoadingAudit] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        const token = localStorage.getItem('jwt');
-        fetch("/api/audit", {
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json"
-            }
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                setLogs(data);
-                setLoading(false);
-            });
+        setLoadingAudit(true);
+        auditService.getAll().then(setAuditLogs).finally(() => setLoadingAudit(false));
     }, []);
 
-    const handleRevoke = async (id: number) => {
-        await fetch(`/api/audit/revoke/${id}`, { method: "POST" });
-        setLogs((logs) =>
-            logs.map((log) =>
-                log.id === id ? { ...log, revoked: true, revokedAt: new Date().toISOString() } : log
-            )
-        );
-    };
-
-    if (loading) return <div>Cargando registro...</div>;
-
     return (
-        <div>
-            <h2>Registro de Auditoría</h2>
-            {logs.length === 0 ? (
-                <div style={{ marginTop: 32, textAlign: 'center', color: '#888' }}>
-                    No hay registros de auditoría para mostrar.
-                </div>
-            ) : (
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Usuario</th>
-                            <th>Acción</th>
-                            <th>Entidad</th>
-                            <th>Fecha</th>
-                            <th>Detalles</th>
-                            <th>Revocada</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {logs.map((log) => (
-                            <tr key={log.id}>
-                                <td>{log.userId}</td>
-                                <td>{log.action}</td>
-                                <td>{log.entity} {log.entityId ?? ""}</td>
-                                <td>{new Date(log.timestamp).toLocaleString()}</td>
-                                <td>{log.details}</td>
-                                <td>{log.revoked ? `Sí (${log.revokedAt ? new Date(log.revokedAt).toLocaleString() : ""})` : "No"}</td>
-                                <td>
-                                    {!log.revoked && (
-                                        <button onClick={() => handleRevoke(log.id)}>Revocar</button>
-                                    )}
-                                </td>
-                            </tr>
+        <Paper sx={{ p: 3, mt: 2 }}>
+            <Typography variant="h5" sx={{ mb: 2 }}>Registro de Auditoría</Typography>
+            <Box sx={{ overflowX: 'auto' }}>
+                <Table size="small">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>ID</TableCell>
+                            <TableCell>Acción</TableCell>
+                            <TableCell>Entidad</TableCell>
+                            <TableCell>ID Entidad</TableCell>
+                            <TableCell>Usuario</TableCell>
+                            <TableCell>Fecha</TableCell>
+                            <TableCell>Restaurado</TableCell>
+                            <TableCell>Detalles</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {loadingAudit ? (
+                            <TableRow><TableCell colSpan={8}>Cargando...</TableCell></TableRow>
+                        ) : auditLogs.length === 0 ? (
+                            <TableRow><TableCell colSpan={8}>No hay registros de auditoría</TableCell></TableRow>
+                        ) : auditLogs.map(log => (
+                            <TableRow key={log.id}>
+                                <TableCell>{log.id}</TableCell>
+                                <TableCell>{log.action}</TableCell>
+                                <TableCell>{log.entity}</TableCell>
+                                <TableCell>{log.entityId}</TableCell>
+                                <TableCell>{log.performedByEmail || '—'}</TableCell>
+                                <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
+                                <TableCell>{log.restoredAt ? new Date(log.restoredAt).toLocaleString() : '—'}</TableCell>
+                                <TableCell>
+                                    <Button variant="text" onClick={() => navigate(`/audit/${log.id}`)} size="small">
+                                        Ver detalles
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
-            )}
-        </div>
+                    </TableBody>
+                </Table>
+            </Box>
+        </Paper>
     );
 }
