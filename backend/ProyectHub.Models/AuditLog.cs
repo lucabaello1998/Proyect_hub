@@ -6,10 +6,13 @@ namespace ProyectHub.Models
     {
         public int Id { get; set; }
         public int UserId { get; set; }
-        public string Action { get; set; } = string.Empty;
         public string Entity { get; set; } = string.Empty;
+        public string Action { get; set; } = string.Empty;
         public int? EntityId { get; set; }
         public DateTime Timestamp { get; set; }
+        public string? Data { get; set; }
+        public string? PerformedByEmail { get; set; }
+        public DateTime? RestoredAt { get; set; }
         public string? Details { get; set; }
         public bool Revoked { get; set; } = false;
         public int? RevokedBy { get; set; }

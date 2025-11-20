@@ -41,48 +41,73 @@ namespace ProyectHub.Api.Controllers
         {
             _context.Projects.Add(project);
             await _context.SaveChangesAsync();
-            // Log de auditoría
-            var userId = int.TryParse(User.FindFirst("userId")?.Value, out var uid) ? uid : 0;
-            _context.AuditLogs.Add(new AuditLog
+            if (project.Id > 0)
             {
-                UserId = userId,
-                Action = "CREATE_PROJECT",
-                Entity = "Project",
-                EntityId = project.Id,
-                Timestamp = DateTime.UtcNow,
-                Details = $"Proyecto creado: {project.Name}"
-            });
-            await _context.SaveChangesAsync();
+                var userId = int.TryParse(User.FindFirst("userId")?.Value, out var uid) ? uid : 0;
+                var userEmail = User.FindFirst("email")?.Value ?? "";
+                var snapshot = System.Text.Json.JsonSerializer.Serialize(project);
+                _context.AuditLogs.Add(new AuditLog
+                {
+                    UserId = userId,
+                    Entity = "Project",
+                    Action = "create",
+                    EntityId = project.Id,
+                    Timestamp = DateTime.UtcNow,
+                    Data = snapshot,
+                    PerformedByEmail = userEmail
+                });
+                await _context.SaveChangesAsync();
+            }
             return CreatedAtAction(nameof(GetProject), new { id = project.Id }, project);
         }
 
         // PUT: api/projects/{id}
         [Authorize]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProject(int id, Project project)
+        public async Task<IActionResult> UpdateProject(int id, [FromBody] Project project)
         {
             if (id != project.Id)
                 return BadRequest();
-            _context.Entry(project).State = EntityState.Modified;
+            var existing = await _context.Projects.FindAsync(id);
+            if (existing == null)
+                return NotFound();
+            // Guardar snapshot previo y actual
+            var previous = System.Text.Json.JsonSerializer.Serialize(existing);
+            // Solo actualiza los campos recibidos, manteniendo los demás
+            existing.Title = project.Title ?? existing.Title;
+            existing.Description = project.Description ?? existing.Description;
+            existing.Author = project.Author ?? existing.Author;
+            existing.Category = project.Category ?? existing.Category;
+            existing.Stack = string.IsNullOrEmpty(project.Stack) ? existing.Stack : project.Stack;
+            existing.Tags = string.IsNullOrEmpty(project.Tags) ? existing.Tags : project.Tags;
+            existing.Images = string.IsNullOrEmpty(project.Images) ? existing.Images : project.Images;
+            existing.ImageUrl = string.IsNullOrEmpty(project.ImageUrl) ? existing.ImageUrl : project.ImageUrl;
+            existing.DemoUrl = string.IsNullOrEmpty(project.DemoUrl) ? existing.DemoUrl : project.DemoUrl;
+            existing.RepoUrl = string.IsNullOrEmpty(project.RepoUrl) ? existing.RepoUrl : project.RepoUrl;
+            existing.CreatedAt = string.IsNullOrEmpty(project.CreatedAt) ? existing.CreatedAt : project.CreatedAt;
             try
             {
                 await _context.SaveChangesAsync();
-                // Log de auditoría
+                // Log de auditoría con cambios previos y actuales
                 var userId = int.TryParse(User.FindFirst("userId")?.Value, out var uid) ? uid : 0;
+                var userEmail = User.FindFirst("email")?.Value ?? "";
+                var current = System.Text.Json.JsonSerializer.Serialize(existing);
+                var auditData = System.Text.Json.JsonSerializer.Serialize(new { previous, current });
                 _context.AuditLogs.Add(new AuditLog
                 {
                     UserId = userId,
-                    Action = "UPDATE_PROJECT",
                     Entity = "Project",
-                    EntityId = project.Id,
+                    Action = "update",
+                    EntityId = existing.Id,
                     Timestamp = DateTime.UtcNow,
-                    Details = $"Proyecto editado: {project.Name}"
+                    Data = auditData,
+                    PerformedByEmail = userEmail
                 });
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.Projects.Any(e => e.Id == id))
+                if (!await _context.Projects.AnyAsync(e => e.Id == id))
                     return NotFound();
                 throw;
             }
@@ -97,18 +122,50 @@ namespace ProyectHub.Api.Controllers
             var project = await _context.Projects.FindAsync(id);
             if (project == null)
                 return NotFound();
+
+            // Borrar imágenes físicas asociadas
+            if (!string.IsNullOrEmpty(project.Images))
+            {
+                try
+                {
+                    var imageList = new List<string>();
+                    if (project.Images.StartsWith("["))
+                        imageList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(project.Images) ?? new List<string>();
+                    else
+                        imageList.Add(project.Images);
+
+                    foreach (var imageUrl in imageList)
+                    {
+                        // Solo borrar si es una URL local
+                        if (imageUrl.Contains("/images/"))
+                        {
+                            var fileName = imageUrl.Split("/images/").Last();
+                            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", fileName);
+                            if (System.IO.File.Exists(filePath))
+                                System.IO.File.Delete(filePath);
+                        }
+                    }
+                }
+                catch { /* Ignorar errores de borrado */ }
+            }
+
+            // Guardar snapshot JSON del proyecto antes de eliminar
+            var projectJson = System.Text.Json.JsonSerializer.Serialize(project);
+
             _context.Projects.Remove(project);
             await _context.SaveChangesAsync();
-            // Log de auditoría
+            // Log de auditoría avanzado
             var userId = int.TryParse(User.FindFirst("userId")?.Value, out var uid) ? uid : 0;
+            var userEmail = User.FindFirst("email")?.Value ?? "";
             _context.AuditLogs.Add(new AuditLog
             {
                 UserId = userId,
-                Action = "DELETE_PROJECT",
                 Entity = "Project",
+                Action = "delete",
                 EntityId = id,
                 Timestamp = DateTime.UtcNow,
-                Details = $"Proyecto eliminado: {project?.Name ?? ""}"
+                Data = projectJson,
+                PerformedByEmail = userEmail
             });
             await _context.SaveChangesAsync();
             return NoContent();
