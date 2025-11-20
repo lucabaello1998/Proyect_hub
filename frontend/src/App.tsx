@@ -7,6 +7,7 @@ import Admin from './pages/Admin';
 import Login from './pages/Login';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import AuditLog from './pages/AuditLog';
+import AuditDetail from './pages/AuditDetail';
 import { useAuthStore } from './store/useAuthStore';
 import { useProjects } from './store/useProjects';
 
@@ -26,21 +27,29 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/dashboard/:id" element={<ProjectDetail />} />
         <Route path="/login" element={<Login />} />
-        <Route 
-          path="/admin" 
+        <Route
+          path="/admin"
           element={
             <ProtectedRoute>
               <Admin />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/audit" 
+        <Route
+          path="/audit"
           element={
             <ProtectedRoute>
               <AuditLog />
             </ProtectedRoute>
-          } 
+          }
+        />
+        <Route
+          path="/audit/:id"
+          element={
+            <ProtectedRoute>
+              <AuditDetail />
+            </ProtectedRoute>
+          }
         />
       </Routes>
     </AppLayout>
