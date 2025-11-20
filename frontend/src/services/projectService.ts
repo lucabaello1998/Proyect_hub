@@ -1,36 +1,46 @@
-import { supabase } from '../config/supabase';
+
 import type { Project } from '../types/project';
 
-/**
- * Servicio para gestionar proyectos en Supabase
- */
 export const projectService = {
   /**
-   * Obtener todos los proyectos
+   * Obtener todos los proyectos desde el backend
    */
   async getAll(): Promise<Project[]> {
     try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Convertir de snake_case a camelCase
+      const response = await fetch('/api/projects');
+      if (!response.ok) throw new Error('Error al obtener proyectos');
+      const data = await response.json();
       return (data || []).map((item: any) => ({
         id: item.id,
         title: item.title,
         description: item.description,
         author: item.author,
         category: item.category,
-        stack: item.stack || [],
-        tags: item.tags || [],
-        images: item.images || [],
-        imageUrl: item.image_url,
-        demoUrl: item.demo_url,
-        repoUrl: item.repo_url,
-        createdAt: item.created_at
+        stack: (() => {
+          if (Array.isArray(item.stack)) return item.stack;
+          if (typeof item.stack === 'string' && item.stack.startsWith('[')) {
+            try { return JSON.parse(item.stack); } catch { return []; }
+          }
+          return [];
+        })(),
+        tags: (() => {
+          if (Array.isArray(item.tags)) return item.tags;
+          if (typeof item.tags === 'string' && item.tags.startsWith('[')) {
+            try { return JSON.parse(item.tags); } catch { return []; }
+          }
+          return [];
+        })(),
+        images: (() => {
+          if (Array.isArray(item.images)) return item.images;
+          if (typeof item.images === 'string' && item.images.startsWith('[')) {
+            try { return JSON.parse(item.images); } catch { return []; }
+          }
+          return [];
+        })(),
+        imageUrl: item.imageUrl,
+        demoUrl: item.demoUrl,
+        repoUrl: item.repoUrl,
+        createdAt: item.createdAt
       }));
     } catch (error) {
       console.error('Error al obtener proyectos:', error);
@@ -39,29 +49,21 @@ export const projectService = {
   },
 
   /**
-   * Subir imágenes a Supabase Storage
+   * Subir imágenes al backend
    */
   async uploadImages(files: File[]): Promise<string[]> {
     try {
-      const uploadPromises = files.map(async (file, index) => {
-        const timestamp = Date.now();
-        const fileName = `${timestamp}_${index}_${file.name}`;
-        const filePath = `projects/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('project-images')
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        // Obtener URL pública
-        const { data } = supabase.storage
-          .from('project-images')
-          .getPublicUrl(filePath);
-
-        return data.publicUrl;
+      const uploadPromises = files.map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch('/api/projects/upload-image', {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) throw new Error('Error al subir imagen');
+        const { url } = await response.json();
+        return url;
       });
-
       return Promise.all(uploadPromises);
     } catch (error) {
       console.error('Error al subir imágenes:', error);
@@ -74,42 +76,25 @@ export const projectService = {
    */
   async create(projectData: Omit<Project, 'id' | 'createdAt'>): Promise<Project> {
     try {
-      const { data, error } = await supabase
-        .from('projects')
-        .insert([{
-          title: projectData.title,
-          description: projectData.description,
-          author: projectData.author,
-          category: projectData.category,
-          stack: projectData.stack || [],
-          tags: projectData.tags || [],
-          images: projectData.images || [],
-          image_url: projectData.imageUrl || '',
-          demo_url: projectData.demoUrl || '',
-          repo_url: projectData.repoUrl || '',
-          created_at: new Date().toISOString()
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      if (!data) throw new Error('No se pudo crear el proyecto');
-
-      // Convertir de snake_case a camelCase
-      return {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        author: data.author,
-        category: data.category,
-        stack: data.stack,
-        tags: data.tags,
-        images: data.images,
-        imageUrl: data.image_url,
-        demoUrl: data.demo_url,
-        repoUrl: data.repo_url,
-        createdAt: data.created_at
+      const token = localStorage.getItem('jwt');
+      // Serializar arrays como strings para el backend
+      const payload = {
+        ...projectData,
+        stack: projectData.stack ? JSON.stringify(projectData.stack) : '',
+        tags: projectData.tags ? JSON.stringify(projectData.tags) : '',
+        images: projectData.images ? JSON.stringify(projectData.images) : ''
       };
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error('No se pudo crear el proyecto');
+      const data = await response.json();
+      return data;
     } catch (error) {
       console.error('Error al crear proyecto:', error);
       throw error;
@@ -119,47 +104,45 @@ export const projectService = {
   /**
    * Actualizar un proyecto existente
    */
-  async update(id: string, projectData: Partial<Omit<Project, 'id' | 'createdAt'>>): Promise<Project> {
+  async update(id: string, projectData: Partial<Omit<Project, 'id' | 'createdAt'>>): Promise<Project | undefined> {
     try {
-      // Convertir de camelCase a snake_case
-      const updateData: any = {};
-      
-      if (projectData.title !== undefined) updateData.title = projectData.title;
-      if (projectData.description !== undefined) updateData.description = projectData.description;
-      if (projectData.author !== undefined) updateData.author = projectData.author;
-      if (projectData.category !== undefined) updateData.category = projectData.category;
-      if (projectData.stack !== undefined) updateData.stack = projectData.stack;
-      if (projectData.tags !== undefined) updateData.tags = projectData.tags;
-      if (projectData.images !== undefined) updateData.images = projectData.images;
-      if (projectData.imageUrl !== undefined) updateData.image_url = projectData.imageUrl;
-      if (projectData.demoUrl !== undefined) updateData.demo_url = projectData.demoUrl;
-      if (projectData.repoUrl !== undefined) updateData.repo_url = projectData.repoUrl;
-
-      const { data, error } = await supabase
-        .from('projects')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      if (!data) throw new Error('No se pudo actualizar el proyecto');
-
-      // Convertir de snake_case a camelCase
-      return {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        author: data.author,
-        category: data.category,
-        stack: data.stack,
-        tags: data.tags,
-        images: data.images,
-        imageUrl: data.image_url,
-        demoUrl: data.demo_url,
-        repoUrl: data.repo_url,
-        createdAt: data.created_at
+      const token = localStorage.getItem('jwt');
+      // Obtener el proyecto actual para enviar todos los campos
+      const allProjects = await this.getAll();
+      const current = allProjects.find(p => p.id === id);
+      if (!current) throw new Error('Proyecto no encontrado');
+      // Mezclar los datos editados con el proyecto actual
+      const merged = {
+        ...current,
+        ...projectData
       };
+      // Serializar arrays como strings para el backend
+      const payload = {
+        ...merged,
+        stack: Array.isArray(merged.stack) ? JSON.stringify(merged.stack) : merged.stack,
+        tags: Array.isArray(merged.tags) ? JSON.stringify(merged.tags) : merged.tags,
+        images: Array.isArray(merged.images) ? JSON.stringify(merged.images) : merged.images
+      };
+      // Eliminar campos undefined o vacíos
+      Object.keys(payload).forEach(key => {
+        if ((payload as any)[key] === undefined || (payload as any)[key] === null) delete (payload as any)[key];
+      });
+      const response = await fetch(`/api/projects/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error('No se pudo actualizar el proyecto');
+      if (response.status === 204) return;
+      try {
+        const data = await response.json();
+        return data;
+      } catch {
+        return;
+      }
     } catch (error) {
       console.error('Error al actualizar proyecto:', error);
       throw error;
@@ -167,37 +150,18 @@ export const projectService = {
   },
 
   /**
-   * Eliminar un proyecto
+   * Eliminar un proyecto en el backend
    */
   async delete(id: string): Promise<void> {
     try {
-      // Primero obtener el proyecto para eliminar sus imágenes
-      const { data: project } = await supabase
-        .from('projects')
-        .select('images')
-        .eq('id', id)
-        .single();
-
-      // Eliminar imágenes del storage
-      if (project?.images && project.images.length > 0) {
-        const filePaths = project.images.map((url: string) => {
-          const urlObj = new URL(url);
-          const pathParts = urlObj.pathname.split('/');
-          return pathParts.slice(-2).join('/'); // "projects/filename"
-        });
-
-        await supabase.storage
-          .from('project-images')
-          .remove(filePaths);
-      }
-
-      // Eliminar el proyecto
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      const token = localStorage.getItem('jwt');
+      const response = await fetch(`/api/projects/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('No se pudo eliminar el proyecto');
     } catch (error) {
       console.error('Error al eliminar proyecto:', error);
       throw error;
