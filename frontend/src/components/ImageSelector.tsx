@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Box, 
-  TextField, 
-  Button, 
-  Tabs, 
-  Tab, 
-  Alert, 
+import {
+  Box,
+  TextField,
+  Button,
+  Tabs,
+  Tab,
+  Alert,
   Typography,
   Dialog,
   DialogTitle,
@@ -22,10 +22,10 @@ interface ImageSelectorProps {
   compact?: boolean;
 }
 
-export const ImageSelector: React.FC<ImageSelectorProps> = ({ 
-  currentImageUrl = '', 
-  onImageChange, 
-  compact = false 
+export const ImageSelector: React.FC<ImageSelectorProps> = ({
+  currentImageUrl = '',
+  onImageChange,
+  compact = false
 }) => {
   const [open, setOpen] = useState(false);
   const [imageMode, setImageMode] = useState<'url' | 'file'>('url');
@@ -91,9 +91,9 @@ export const ImageSelector: React.FC<ImageSelectorProps> = ({
               </Tabs>
 
               {imageMode === 'url' ? (
-                <TextField 
-                  label="URL de la imagen" 
-                  value={urlValue} 
+                <TextField
+                  label="URL de la imagen"
+                  value={urlValue}
                   onChange={e => setUrlValue(e.target.value)}
                   type="url"
                   placeholder="https://ejemplo.com/imagen.jpg"
@@ -116,7 +116,7 @@ export const ImageSelector: React.FC<ImageSelectorProps> = ({
                       style={{ display: 'none' }}
                     />
                   </Button>
-                  
+
                   {selectedFile && (
                     <Alert severity="info" sx={{ mt: 1 }} action={
                       <Button color="inherit" size="small" onClick={clearFile}>
@@ -166,16 +166,16 @@ export const ImageSelector: React.FC<ImageSelectorProps> = ({
   return (
     <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2 }}>
       <Typography variant="subtitle2" sx={{ mb: 2 }}>Imagen del proyecto</Typography>
-      
+
       <Tabs value={imageMode} onChange={(_, value) => setImageMode(value)} sx={{ mb: 2 }}>
         <Tab icon={<LinkIcon />} label="URL" value="url" iconPosition="start" />
         <Tab icon={<CloudUploadIcon />} label="Subir archivo" value="file" iconPosition="start" />
       </Tabs>
 
       {imageMode === 'url' ? (
-        <TextField 
-          label="URL de la imagen" 
-          value={urlValue} 
+        <TextField
+          label="URL de la imagen"
+          value={urlValue}
           onChange={e => {
             setUrlValue(e.target.value);
             onImageChange(e.target.value);
@@ -211,7 +211,7 @@ export const ImageSelector: React.FC<ImageSelectorProps> = ({
               style={{ display: 'none' }}
             />
           </Button>
-          
+
           {selectedFile && (
             <Alert severity="info" sx={{ mt: 1 }} action={
               <Button color="inherit" size="small" onClick={clearFile}>
