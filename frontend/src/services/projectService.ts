@@ -10,38 +10,41 @@ export const projectService = {
       const response = await fetch('/api/projects');
       if (!response.ok) throw new Error('Error al obtener proyectos');
       const data = await response.json();
-      return (data || []).map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        author: item.author,
-        category: item.category,
-        stack: (() => {
-          if (Array.isArray(item.stack)) return item.stack;
-          if (typeof item.stack === 'string' && item.stack.startsWith('[')) {
-            try { return JSON.parse(item.stack); } catch { return []; }
-          }
-          return [];
-        })(),
-        tags: (() => {
-          if (Array.isArray(item.tags)) return item.tags;
-          if (typeof item.tags === 'string' && item.tags.startsWith('[')) {
-            try { return JSON.parse(item.tags); } catch { return []; }
-          }
-          return [];
-        })(),
-        images: (() => {
-          if (Array.isArray(item.images)) return item.images;
-          if (typeof item.images === 'string' && item.images.startsWith('[')) {
-            try { return JSON.parse(item.images); } catch { return []; }
-          }
-          return [];
-        })(),
-        imageUrl: item.imageUrl,
-        demoUrl: item.demoUrl,
-        repoUrl: item.repoUrl,
-        createdAt: item.createdAt
-      }));
+      return (data || [])
+        .filter((item: any) => !item.isDeleted)
+        .map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          author: item.author,
+          category: item.category,
+          stack: (() => {
+            if (Array.isArray(item.stack)) return item.stack;
+            if (typeof item.stack === 'string' && item.stack.startsWith('[')) {
+              try { return JSON.parse(item.stack); } catch { return []; }
+            }
+            return [];
+          })(),
+          tags: (() => {
+            if (Array.isArray(item.tags)) return item.tags;
+            if (typeof item.tags === 'string' && item.tags.startsWith('[')) {
+              try { return JSON.parse(item.tags); } catch { return []; }
+            }
+            return [];
+          })(),
+          images: (() => {
+            if (Array.isArray(item.images)) return item.images;
+            if (typeof item.images === 'string' && item.images.startsWith('[')) {
+              try { return JSON.parse(item.images); } catch { return []; }
+            }
+            return [];
+          })(),
+          imageUrl: item.imageUrl,
+          demoUrl: item.demoUrl,
+          repoUrl: item.repoUrl,
+          createdAt: item.createdAt,
+          isDeleted: item.isDeleted
+        }));
     } catch (error) {
       console.error('Error al obtener proyectos:', error);
       throw error;

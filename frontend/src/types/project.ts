@@ -44,4 +44,5 @@ export type Project = {
   author?: string; // Autor del proyecto
   tags?: string[]; // Tags adicionales
   repository?: GitRepository;
+  isDeleted?: boolean;
 };

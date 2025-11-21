@@ -14,5 +14,6 @@ namespace ProyectHub.Models
         public string DemoUrl { get; set; } = string.Empty;
         public string RepoUrl { get; set; } = string.Empty;
         public string CreatedAt { get; set; } = string.Empty;
+        public bool IsDeleted { get; set; } = false;
     }
 }

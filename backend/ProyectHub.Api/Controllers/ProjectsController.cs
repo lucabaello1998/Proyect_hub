@@ -21,7 +21,7 @@ namespace ProyectHub.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Project>>> GetProjects()
         {
-            return await _context.Projects.ToListAsync();
+            return await _context.Projects.Where(p => !p.IsDeleted).ToListAsync();
         }
 
         // GET: api/projects/{id}
@@ -123,36 +123,10 @@ namespace ProyectHub.Api.Controllers
             if (project == null)
                 return NotFound();
 
-            // Borrar imágenes físicas asociadas
-            if (!string.IsNullOrEmpty(project.Images))
-            {
-                try
-                {
-                    var imageList = new List<string>();
-                    if (project.Images.StartsWith("["))
-                        imageList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(project.Images) ?? new List<string>();
-                    else
-                        imageList.Add(project.Images);
-
-                    foreach (var imageUrl in imageList)
-                    {
-                        // Solo borrar si es una URL local
-                        if (imageUrl.Contains("/images/"))
-                        {
-                            var fileName = imageUrl.Split("/images/").Last();
-                            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", fileName);
-                            if (System.IO.File.Exists(filePath))
-                                System.IO.File.Delete(filePath);
-                        }
-                    }
-                }
-                catch { /* Ignorar errores de borrado */ }
-            }
-
-            // Guardar snapshot JSON del proyecto antes de eliminar
+            // Guardar snapshot JSON del proyecto antes de marcar como eliminado
             var projectJson = System.Text.Json.JsonSerializer.Serialize(project);
 
-            _context.Projects.Remove(project);
+            project.IsDeleted = true;
             await _context.SaveChangesAsync();
             // Log de auditoría avanzado
             var userId = int.TryParse(User.FindFirst("userId")?.Value ?? User.FindFirst("Id")?.Value, out var uid) ? uid : 0;
