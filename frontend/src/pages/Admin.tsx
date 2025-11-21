@@ -4,10 +4,8 @@ import SaveIcon from '@mui/icons-material/Save';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useProjects } from '../store/useProjects';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 export default function Admin() {
-  const navigate = useNavigate();
   const items = useProjects(state => state.items);
   const add = useProjects(state => state.add);
   const update = useProjects(state => state.update);

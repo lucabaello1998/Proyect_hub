@@ -1,11 +1,7 @@
 import { jwtDecode } from 'jwt-decode';
-import { supabase } from '../config/supabase';
 import type { User } from '../types/auth';
 import { AUTH_URL } from './api';
 
-/**
- * Servicio de autenticación con Supabase
- */
 export const authService = {
   /**
    * Iniciar sesión con email y contraseña
@@ -30,78 +26,7 @@ export const authService = {
     } catch (err) {
       console.error('Error de red al intentar login backend:', err);
     }
-    // Fallback: login con Supabase
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      if (error || !data.user) {
-        console.error('Error Supabase login:', error?.message || error);
-        return null;
-      }
-      const { data: userData } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
-      if (!userData) {
-        console.error('No se encontró el usuario en Supabase.');
-        return null;
-      }
-      return {
-        id: data.user.id,
-        username: userData.username,
-        email: data.user.email || '',
-        role: userData.role || 'user',
-        name: userData.name || username
-      } as User;
-    } catch (error) {
-      console.error('Error al iniciar sesión con Supabase:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Cerrar sesión
-   */
-  async logout(): Promise<void> {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Observar cambios en el estado de autenticación
-   */
-  onAuthChange(callback: (user: User | null) => void) {
-    return supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (userData) {
-          callback({
-            id: session.user.id,
-            username: userData.username,
-            email: session.user.email || '',
-            role: userData.role || 'user',
-            name: userData.name || userData.username
-          } as User);
-        } else {
-          callback(null);
-        }
-      } else {
-        callback(null);
-      }
-    });
+    return null;
   },
 
   /**
@@ -122,5 +47,12 @@ export const authService = {
     } catch {
       return null;
     }
+  },
+
+  /**
+   * Cerrar sesión
+   */
+  logout() {
+    localStorage.removeItem('jwt');
   }
 };
