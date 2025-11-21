@@ -57,7 +57,6 @@ export default function Admin() {
       ? form.tags.split(',').map(s => s.trim()).filter(Boolean)
       : [];
 
-    // Subir las imágenes reales (Files) a Supabase
     add({
       title: form.title.trim(),
       description: form.description.trim(),
@@ -93,9 +92,6 @@ export default function Admin() {
         Administración de Proyectos
       </Typography>
 
-      <Button variant="outlined" sx={{ mt: 2 }} onClick={() => navigate('/audit')}>
-        Ver registro de auditoría
-      </Button>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h5" sx={{ mb: 2 }}>Crear Proyecto</Typography>
         <Stack spacing={2}>

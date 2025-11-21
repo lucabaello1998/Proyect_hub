@@ -27,7 +27,6 @@ export default function AuditLogPage() {
                             <TableCell>ID Entidad</TableCell>
                             <TableCell>Usuario</TableCell>
                             <TableCell>Fecha</TableCell>
-                            <TableCell>Restaurado</TableCell>
                             <TableCell>Detalles</TableCell>
                         </TableRow>
                     </TableHead>
@@ -44,7 +43,6 @@ export default function AuditLogPage() {
                                 <TableCell>{log.entityId}</TableCell>
                                 <TableCell>{log.performedByEmail || '—'}</TableCell>
                                 <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
-                                <TableCell>—</TableCell>
                                 <TableCell>
                                     <Button variant="text" onClick={() => navigate(`/audit/${log.id}`)} size="small">
                                         Ver detalles
