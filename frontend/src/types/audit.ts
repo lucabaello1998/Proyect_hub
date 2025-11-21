@@ -7,9 +7,5 @@ export interface AuditLog {
     timestamp: string;
     data?: string;
     performedByEmail?: string;
-    restoredAt?: string;
     details?: string;
-    revoked?: boolean;
-    revokedBy?: number;
-    revokedAt?: string;
 }

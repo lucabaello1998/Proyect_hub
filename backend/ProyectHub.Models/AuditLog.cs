@@ -12,10 +12,5 @@ namespace ProyectHub.Models
         public DateTime Timestamp { get; set; }
         public string? Data { get; set; }
         public string? PerformedByEmail { get; set; }
-        public DateTime? RestoredAt { get; set; }
-        public string? Details { get; set; }
-        public bool Revoked { get; set; } = false;
-        public int? RevokedBy { get; set; }
-        public DateTime? RevokedAt { get; set; }
     }
 }

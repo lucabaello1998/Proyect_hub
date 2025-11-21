@@ -44,7 +44,7 @@ export default function AuditLogPage() {
                                 <TableCell>{log.entityId}</TableCell>
                                 <TableCell>{log.performedByEmail || '—'}</TableCell>
                                 <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
-                                <TableCell>{log.restoredAt ? new Date(log.restoredAt).toLocaleString() : '—'}</TableCell>
+                                <TableCell>—</TableCell>
                                 <TableCell>
                                     <Button variant="text" onClick={() => navigate(`/audit/${log.id}`)} size="small">
                                         Ver detalles
