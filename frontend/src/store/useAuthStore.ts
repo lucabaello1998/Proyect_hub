@@ -92,11 +92,3 @@ export const useAuthStore = create<AuthStore>()(
     }
   )
 );
-
-// Escuchar cambios de autenticación
-authService.onAuthChange((user) => {
-  useAuthStore.setState({
-    user,
-    isAuthenticated: !!user
-  });
-});
